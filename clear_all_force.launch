@@ -1,0 +1,5 @@
+<launch>
+  <node name="clear_force" pkg="rotors_gazebo" type="clear_force" />
+  <node name="clear_force_1" pkg="rotors_gazebo" type="clear_force_1" />
+  <node name="clear_force_2" pkg="rotors_gazebo" type="clear_force_2" />
+</launch>

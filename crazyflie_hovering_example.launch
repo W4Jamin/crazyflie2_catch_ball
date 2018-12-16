@@ -1,0 +1,47 @@
+<launch>
+  <arg name="mav_name" default="crazyflie2"/>
+  <arg name="world_name" default="three_balls"/>
+  <arg name="enable_logging" default="false" />
+  <arg name="enable_ground_truth" default="true" />
+  <arg name="log_file" default="$(arg mav_name)" />
+  <arg name="paused" value="true"/>
+  <arg name="gdb" default="false"/>
+  <arg name="gdb_prefix" value="" unless="$(arg gdb)"/>
+  <arg name="gdb_prefix" value="x-terminal-emulator -e gdb -ex run --args" if="$(arg gdb)"/>
+
+  <env name="GAZEBO_MODEL_PATH" value="$(find rotors_gazebo)/models"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world" />
+    <arg if="$(arg gdb)" name="debug" value="true"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg if="$(arg gdb)" name="gui" value="false"/>
+  </include>
+
+  <node if="$(arg gdb)" name="gazebo_gui" pkg="gazebo_ros" type="gzclient_debug" respawn="false" output="screen" launch-prefix="x-terminal-emulator -e"/>
+
+  <group ns="$(arg mav_name)">
+    <include file="$(find rotors_gazebo)/launch/spawn_mav.launch">
+      <arg name="mav_name" value="$(arg mav_name)" />
+      <!-- <arg name="x" value="1" /> -->
+      <!-- <arg name="y" value="1" /> -->
+      <arg name="model" value="$(find rotors_description)/urdf/mav_generic_odometry_sensor.gazebo" />
+      <arg name="enable_logging" value="$(arg enable_logging)" />
+      <arg name="enable_ground_truth" value="$(arg enable_ground_truth)" />
+      <arg name="log_file" value="$(arg log_file)"/>
+    </include>
+    <node name="lee_position_controller_node" pkg="rotors_control" type="lee_position_controller_node" output="screen" launch-prefix="$(arg gdb_prefix)">
+      <rosparam command="load" file="$(find rotors_gazebo)/resource/lee_controller_$(arg mav_name).yaml" />
+      <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
+      <remap from="odometry" to="odometry_sensor1/odometry" />
+    </node>
+    <node name="hovering_example" pkg="rotors_gazebo" type="hovering_example" output="screen" launch-prefix="$(arg gdb_prefix)" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+    <node name="quaternion_to_rpy" pkg="rotors_gazebo" type="quaternion_to_rpy" output="screen">
+      <remap from="pose" to="odometry_sensor1/pose" />
+    </node>
+    <node name="position_plot" pkg="rqt_plot" type="rqt_plot" args="--clear-config /$(arg mav_name)/odometry_sensor1/pose_with_covariance/pose/pose/position" output="screen" />
+    <node name="orientation_plot" pkg="rqt_plot" type="rqt_plot" args="--clear-config /$(arg mav_name)/orientation_rpy" output="screen" />
+
+  </group>
+</launch>

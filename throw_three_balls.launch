@@ -1,0 +1,5 @@
+<launch>
+  <node name="throw_ball" pkg="rotors_gazebo" type="throw_ball" />
+  <node name="throw_ball_1" pkg="rotors_gazebo" type="throw_ball_1" />
+  <node name="throw_ball_2" pkg="rotors_gazebo" type="throw_ball_2" />
+</launch>
